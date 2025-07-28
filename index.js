@@ -4,6 +4,7 @@ const sendBtn = document.querySelector("#send-message");
 const fileInput = document.querySelector("#file-input");
 const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
 const fileCancelBtn = document.querySelector("#file-cancel");
+const chatbotToggler = document.querySelector("#chatbot-toggler");
 
 const userData = {
   message: null,
@@ -276,3 +277,7 @@ const picker = new EmojiMart.Picker({
 });
 
 document.querySelector(".chat-form").appendChild(picker);
+
+chatbotToggler.addEventListener("click", () => {
+  document.body.classList.toggle("show-chatbot");
+});
