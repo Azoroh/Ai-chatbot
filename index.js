@@ -5,6 +5,7 @@ const fileInput = document.querySelector("#file-input");
 const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
 const fileCancelBtn = document.querySelector("#file-cancel");
 const chatbotToggler = document.querySelector("#chatbot-toggler");
+const closeChatbot = document.querySelector("#close-chatbot");
 
 const userData = {
   message: null,
@@ -13,6 +14,9 @@ const userData = {
     mime_type: null,
   },
 };
+
+const chatHistory = [];
+const initialInputHeight = textArea.scrollHeight;
 
 const API_KEY = "AIzaSyBALXyZYcUGSzyu8ytdhu5dU948H4rAkdI";
 const API_URL =
@@ -68,7 +72,12 @@ sendBtn.addEventListener("click", (e) => {
 textArea.addEventListener("keydown", (e) => {
   const userMessage = textArea.value.trim();
 
-  if (e.key === "Enter" && userMessage) {
+  if (
+    e.key === "Enter" &&
+    !e.shiftKey &&
+    window.innerWidth > 480 &&
+    userMessage
+  ) {
     e.preventDefault();
 
     userData.message = userMessage;
@@ -76,16 +85,13 @@ textArea.addEventListener("keydown", (e) => {
   }
 });
 
-/*
-function escapeHtml(text) {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-    */
+//Adjust input field height dynamically
+textArea.addEventListener("input", () => {
+  textArea.style.height = `${initialInputHeight}px`;
+  textArea.style.height = `${textArea.scrollHeight}px`;
+  document.querySelector(".chat-form").style.borderRadius =
+    textArea.scrollHeight > initialInputHeight ? "15px" : "32px";
+});
 
 // handle Html injections
 function escapeHtml(text) {
@@ -169,17 +175,19 @@ function outGoingMessage() {
 }
 
 async function generateBotResponse() {
+  //Add user message to chat history
+  chatHistory.push({
+    role: "user",
+    parts: userData.file.data
+      ? [{ text: userData.message }, { inline_data: userData.file }]
+      : [{ text: userData.message }],
+  });
+
   const requestOptions = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [
-        {
-          parts: userData.file.data
-            ? [{ text: userData.message }, { inline_data: userData.file }]
-            : [{ text: userData.message }],
-        },
-      ],
+      contents: chatHistory,
     }),
   };
 
@@ -195,6 +203,12 @@ async function generateBotResponse() {
     }
 
     inComingBotMessage(botText);
+
+    //Add bot response to chat history
+    chatHistory.push({
+      role: "model",
+      parts: [{ text: botText }],
+    });
   } catch (error) {
     console.log(error);
 
@@ -280,4 +294,8 @@ document.querySelector(".chat-form").appendChild(picker);
 
 chatbotToggler.addEventListener("click", () => {
   document.body.classList.toggle("show-chatbot");
+});
+
+closeChatbot.addEventListener("click", () => {
+  document.body.classList.remove("show-chatbot");
 });
